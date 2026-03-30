@@ -9,14 +9,19 @@ type LinkItem = {
   image: string | null;
 };
 
+type LatestRelease = {
+  title: string;
+  artist: string;
+  coverArt: string | null;
+  href: string;
+};
+
 // Fallback images when the API doesn't return one
 const fallbackImages: Record<string, string> = {
   main: "https://images.unsplash.com/photo-1521335629791-ce4aec67dd53?q=80&w=1200&auto=format&fit=crop",
   stream:
     "https://images.unsplash.com/photo-1511376777868-611b54f68947?q=80&w=1200&auto=format&fit=crop",
   shop: "https://images.unsplash.com/photo-1520975916090-3105956dac38?q=80&w=1200&auto=format&fit=crop",
-  latest:
-    "https://images.unsplash.com/photo-1501612780327-45045538702b?q=80&w=1200&auto=format&fit=crop",
   lodge:
     "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?q=80&w=1200&auto=format&fit=crop",
   contact:
@@ -47,13 +52,6 @@ const staticLinks: LinkItem[] = [
     image: null,
   },
   {
-    id: "latest",
-    title: "Latest Drop",
-    subtitle: "New release",
-    href: "https://theniijis.com",
-    image: null,
-  },
-  {
     id: "lodge",
     title: "The Lodge",
     subtitle: "Tribe community",
@@ -69,16 +67,22 @@ const staticLinks: LinkItem[] = [
   },
 ];
 
-async function getLinks(): Promise<LinkItem[]> {
+async function getData(): Promise<{
+  links: LinkItem[];
+  latestRelease: LatestRelease | null;
+}> {
   try {
     const res = await fetch(`${API_URL}/api/links`, {
-      next: { revalidate: 300 }, // Revalidate every 5 minutes
+      next: { revalidate: 300 },
     });
     if (!res.ok) throw new Error(`API returned ${res.status}`);
     const data = await res.json();
-    return data.links || staticLinks;
+    return {
+      links: data.links || staticLinks,
+      latestRelease: data.latestRelease || null,
+    };
   } catch {
-    return staticLinks;
+    return { links: staticLinks, latestRelease: null };
   }
 }
 
@@ -87,7 +91,7 @@ function isExternalLink(href: string) {
 }
 
 export default async function Page() {
-  const links = await getLinks();
+  const { links, latestRelease } = await getData();
 
   return (
     <div className="min-h-screen bg-black text-white">
@@ -102,6 +106,51 @@ export default async function Page() {
         </header>
 
         <section className="space-y-4">
+          {/* Auto NEW RELEASE card — always at top when a release exists */}
+          {latestRelease && (
+            <a
+              href={latestRelease.href}
+              target="_blank"
+              rel="noreferrer"
+              className="group block overflow-hidden rounded-2xl focus:outline-none focus:ring-2 focus:ring-[#FFF385]/70"
+              aria-label={`New Release: ${latestRelease.title}`}
+            >
+              <div className="relative h-52 w-full overflow-hidden rounded-2xl bg-neutral-900 ring-1 ring-[#FFF385]/20">
+                {latestRelease.coverArt ? (
+                  <img
+                    src={latestRelease.coverArt}
+                    alt={latestRelease.title}
+                    className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                  />
+                ) : (
+                  <div className="h-full w-full bg-gradient-to-br from-neutral-800 to-neutral-900" />
+                )}
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/30 to-transparent transition duration-300 group-hover:from-black/60" />
+
+                <div className="absolute left-3 top-3">
+                  <span className="inline-block rounded-full bg-[#FFF385] px-3 py-1 text-[10px] font-bold uppercase tracking-[0.15em] text-black shadow-md">
+                    New Release
+                  </span>
+                </div>
+
+                <div className="absolute inset-0 flex flex-col justify-end p-4">
+                  <p className="text-[11px] uppercase tracking-[0.2em] text-white/70">
+                    {latestRelease.artist}
+                  </p>
+                  <h2 className="text-2xl font-bold text-white">
+                    {latestRelease.title}
+                  </h2>
+                </div>
+
+                <div className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-[#FFF385] text-sm font-bold text-black shadow-md transition duration-300 group-hover:scale-105">
+                  &rarr;
+                </div>
+              </div>
+            </a>
+          )}
+
+          {/* Regular link cards */}
           {links.map((link) => {
             const imageUrl =
               link.image || fallbackImages[link.id] || fallbackImages.main;
