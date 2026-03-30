@@ -93,14 +93,12 @@ export default async function Page() {
     <div className="min-h-screen bg-black text-white">
       <main className="mx-auto max-w-md px-4 py-8 sm:py-10">
         <header className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-[#FFF385] text-xl font-semibold text-black shadow-[0_0_30px_rgba(255,243,133,0.15)]">
-            N
-          </div>
-
-          <h1 className="text-3xl font-semibold tracking-tight">
-            The Niiji&apos;s
-          </h1>
-          <p className="mt-2 text-sm text-neutral-500">All paths lead here</p>
+          <img
+            src="/images/logo.png"
+            alt="The Niiji's"
+            className="mx-auto mb-3 h-16 w-auto"
+          />
+          <p className="text-sm text-neutral-500">All paths lead here</p>
         </header>
 
         <section className="space-y-4">
